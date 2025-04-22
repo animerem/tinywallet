@@ -65,18 +65,25 @@ export class core {
     async BuildTransaction(ix: TransactionInstruction[], payer: PublicKey) {
         console.log(`Building Transaction`);
         const connection = this.connection;
-
+    
         // create v0 compatible message
         console.log(`Getting latest blockhash`);
-        let {blockhash} = await connection.getLatestBlockhash();
-
+        let blockhash: string;
+        try {
+            const result = await connection.getLatestBlockhash();
+            blockhash = result.blockhash;
+        } catch (error) {
+            console.error('Error fetching latest blockhash:', error);
+            throw new Error('Failed to fetch latest blockhash');
+        }
+    
         console.log(`Creating message`);
         const messageV0 = new TransactionMessage({
             payerKey: payer,
             recentBlockhash: blockhash,
             instructions: ix,
         }).compileToV0Message();
-
+    
         console.log(`Creating versioned transaction`);
         return new VersionedTransaction(messageV0);
     }
