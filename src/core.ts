@@ -22,44 +22,40 @@ export class core {
         keystoreType: KeystoreType = process.env.KEYSTORE_TYPE as KeystoreType,
         connection?: Connection
     ) {
+        if (!keystoreType) {
+            throw new Error("Keystore type is not defined in environment variables.");
+        }
+    
         let keymanager: KeyManager;
-
+    
         switch (keystoreType) {
             case KeystoreType.Local:
-                {
-                    const { LocalKeyManager } = await import('./keymanagers/localkeymanager');
-                    keymanager = new LocalKeyManager();
-                }
+                const { LocalKeyManager } = await import('./keymanagers/localkeymanager');
+                keymanager = new LocalKeyManager();
                 break;
             case KeystoreType.Ledger:
-                {
-                    const { LedgerKeyManager } = await import('./keymanagers/ledgerkeymanager');
-                    keymanager = await LedgerKeyManager.createAsync();
-                }
+                const { LedgerKeyManager } = await import('./keymanagers/ledgerkeymanager');
+                keymanager = await LedgerKeyManager.createAsync();
                 break;
             case KeystoreType.Turnkey:
-                {
-                    const { TurnKeyManager } = await import('./keymanagers/turnkeymanager');
-                    keymanager = new TurnKeyManager();
-                }
+                const { TurnKeyManager } = await import('./keymanagers/turnkeymanager');
+                keymanager = new TurnKeyManager();
                 break;
             case KeystoreType.Environment:
-                {
-                    const { EnvironmentKeyManager } = await import('./keymanagers/environmentkeymanager');
-                    keymanager = new EnvironmentKeyManager();
-                }
+                const { EnvironmentKeyManager } = await import('./keymanagers/environmentkeymanager');
+                keymanager = new EnvironmentKeyManager();
                 break;
             default:
-                throw new Error(`Unsupported keystore type.`);
+                throw new Error(`Unsupported keystore type: ${keystoreType}`);
         }
-
+    
         // Use the provided connection or create a new one
         const conn = connection || new Connection(
-            process.env.RPC_URL!,
-            process.env.COMMITMENT! as Commitment
+            process.env.RPC_URL || "https://api.mainnet-beta.solana.com", // Default RPC URL if not provided
+            process.env.COMMITMENT as Commitment || "processed"
         );
-
-        return new core(keymanager!, conn);
+    
+        return new core(keymanager, conn);
     }
 
     GetKeystoreType() {
